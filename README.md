@@ -17,5 +17,15 @@ Small python tools for every-day use
 #### Example push_id use:
 
     data = push_id(data)
+    
+    data = push_id(
+      data,
+      is_developer=True,
+      is_complex=True,
+      is_corp=True,
+      is_flat=False,
+    )
 
+#### Locator
 
+    tools.Locator().safe_locate('California')
