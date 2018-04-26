@@ -13,7 +13,8 @@ setup(
   description='Some tools for python (sites parsing)',
   entry_points = {
     'console_scripts': [
-      'tools = tools:push_id'
+      'tools = tools:push_id',
+      'mqrecive = tools:cmd_mqrecive'
     ]
   }
 )

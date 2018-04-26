@@ -32,10 +32,9 @@ def push_id(data, is_developer=True, is_complex=True, is_corp=True, is_flat=True
   return data
 
 
-
-  '''
-  Sender can deliver messages to RabbitMQ
-  '''
+'''
+Sender can deliver messages to RabbitMQ
+'''
 def sender(data, **kwargs):
   config = {
     'uri': 'amqp://guest:guest@localhost/%2f',
@@ -65,6 +64,59 @@ def sender(data, **kwargs):
     properties=config['properties']
   )
   config['connection'].close()
+
+
+
+
+
+
+
+'''
+Recive messages from RabbitMQ
+'''
+def reciver(**kwargs):
+  config = {
+    'uri': 'amqp://guest:guest@localhost/%2f',
+    'exchange': 'exchange',
+    'queue': 'queue',
+    'routing_key': '',
+    'socket_timeout': 10,
+    'content_type': 'application/json',
+    'delivery_mode': 1,
+    'headers': {}
+  }
+  for key in kwargs:
+    config[key] = kwargs[key]
+  config['params'] = pika.URLParameters(config['uri'])
+  config['params'].socket_timeout = config['socket_timeout']
+  config['connection'] = pika.BlockingConnection(config['params'])
+  config['channel'] = config['connection'].channel()
+
+  config['properties'] = pika.BasicProperties(
+    delivery_mode = config['delivery_mode'],
+    content_type = config['content_type'],
+    headers = config['headers']
+  )
+
+  for method_frame, properties, body in config['channel'].consume(
+    config['queue']
+  ):
+    print(method_frame)
+    print(properties)
+    print(body)
+    config['channel'].basic_ack(method_frame.delivery_tag)
+    break
+  config['connection'].close()
+
+
+def cmd_mqrecive():
+  reciver(
+    uri = os.environ['RABBITMQ_URI'],
+    queue = os.environ['QUEUE']
+  )
+
+
+
 
 
 
