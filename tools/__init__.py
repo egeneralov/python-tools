@@ -103,7 +103,7 @@ def reciver(**kwargs):
   ):
     print(method_frame)
     print(properties)
-    print(body)
+    print(body.decode())
     config['channel'].basic_ack(method_frame.delivery_tag)
     break
   config['connection'].close()
