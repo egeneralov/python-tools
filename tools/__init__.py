@@ -1,4 +1,5 @@
 import os
+import hashlib
 
 import pika
 from geopy.geocoders import Nominatim
@@ -17,14 +18,35 @@ def push_id(data, is_developer=True, is_complex=True, is_corp=True, is_flat=True
     for complex in data['developers'][i_dev]['complexes']:
       if is_complex:
         data['developers'][i_dev]['complexes'][i_comp]['id'] = i_comp
+      
+      # prepare index for flat-layouts
+      index = {}
+      for fl in data['developers'][i_dev]['complexes'][i_comp]['flat-layouts']:
+        index[fl['id']] = fl
+      fin = {}
+      for key in index.keys():
+        id = hashlib.sha256(key.encode()).hexdigest()
+        fl = index[key]
+        fl['id'] = id
+        fin[id] = fl
+      newfl = []
+      for fl in fin.keys():
+        newfl.append(
+          fin[fl]
+        )
+      data['developers'][i_dev]['complexes'][i_comp]['flat-layouts'] = newfl
+
       i_corp = 0
       for corp in data['developers'][i_dev]['complexes'][i_comp]['corps']:
         if is_corp:
           data['developers'][i_dev]['complexes'][i_comp]['corps'][i_corp]['id'] = i_corp
         i_flat = 0
         for flat in data['developers'][i_dev]['complexes'][i_comp]['corps'][i_corp]['flats']:
+          flat['layout-id'] = index[flat['layout-id']]['id']
+          flat = str(flat).encode()
+          flat = hashlib.sha256(flat).hexdigest()
           if is_flat:
-            data['developers'][i_dev]['complexes'][i_comp]['corps'][i_corp]['flats'][i_flat]['id'] = i_flat
+            data['developers'][i_dev]['complexes'][i_comp]['corps'][i_corp]['flats'][i_flat]['id'] = flat
           i_flat += 1
         i_corp += 1
       i_comp += 1
