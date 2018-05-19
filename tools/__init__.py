@@ -1,6 +1,9 @@
 import os
 import hashlib
+import logging
+import json
 
+import requests
 import pika
 from geopy.geocoders import Nominatim
 import geocoder
@@ -190,4 +193,60 @@ class Locator(object):
       except:
         pass
       i+=1
+
+
+
+class TelegramNoti(object):
+  tg_token = ''
+  tg_base_url = 'https://api.telegram.org/bot'
+  tg_url_messages = '/sendMessage'
+  tg_url = ''
+  data = ''
+  message = ''
+  tg_headers = {'Content-type': 'application/json'}
+  parse_mode = 'Markdown'
+  is_success = False
+
+  def __init__(self, chat_id, token, message=None):
+    logging.debug(
+      'Created telegram object with args - chat_id: {}, message: {}, token: {}'.format(
+        chat_id, message, token
+      )
+    )
+    self.message = message
+    self.chat_id = chat_id
+    self.tg_token = token
+
+  def prepare(self):
+    logging.debug('Invoked prepare')
+    self.tg_url = self.tg_base_url + self.tg_token + self.tg_url_messages
+    logging.debug('Telegram api url: {}'.format(self.tg_url))
+    self.data = {'chat_id': self.chat_id, 'text': self.message, 'parse_mode': self.parse_mode}
+    logging.debug('Telegram service message: {}'.format(self.data))
+    self.data = json.dumps(self.data)
+
+  def request(self):
+    logging.debug('Invoked request')
+    try:
+      result = requests.post(self.tg_url, data=self.data, headers=self.tg_headers)
+      return self.humanise(result)
+    except:
+      return "Something wrong with networking"
+
+  def humanise(self, result):
+    logging.debug('Invoked humanise with status_code: {}'.format(result.status_code))
+    if result.status_code == 200:
+      self.is_success = True
+      logging.info('Message delivered successefuly')
+    elif result.status_code == 401:
+      logging.error('Authorisation failed (check token)')
+    else:
+      logging.warning('Not-standart status-code')
+      return result.content
+
+  def send(self):
+    logging.debug('Invoked send')
+    self.prepare()
+    answer = self.request()
+    return answer
 
